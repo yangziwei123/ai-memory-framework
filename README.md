@@ -58,6 +58,17 @@ examples/                         跑起来长什么样的样例
 
 ## 快速开始
 
+先看效果（不需要配置任何东西）：
+
+```bash
+node demo/run.js
+```
+
+它会造 4 篇假日记 → 跑真正的轮转脚本 → 打印「群聊」和「私聊」各自会收到的提示词。
+详细说明见 [`demo/README.md`](demo/README.md)。
+
+然后再正式布置：
+
 ```bash
 git clone <this-repo> && cd <this-repo>
 
