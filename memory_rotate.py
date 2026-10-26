@@ -148,12 +148,32 @@ def build_short(today: dt.date, keep_days: int):
 
 
 def find_day_block(d: dt.date):
-    """超过 keep_days 的旧记忆，从长期总库对应日期范围的块里取。"""
+    """从长期总库里取某一天的块。
+
+    支持两种标题格式：
+      · `### 2026-10-19`                —— 按天留块（本脚本自己写的格式）
+      · `### 2026-10-19 ~ 2026-10-24`   —— 区间块（手工/早期迁移留下的格式）
+
+    只认第一种会让区间块里的日期永远取不到。这个 bug 在真机上表现为
+    「第 7 天复习项永远缺失」：默认保留 7 天，today-7 的日记已被归档，
+    只剩总库能取，而总库里恰好是区间块 → find_day_block 返回 None。
+    """
     for f in sorted(BANK.rglob('*.md')):
-        txt = f.read_text(encoding='utf-8')
-        m = re.search(rf'^### {re.escape(d.isoformat())}\n(.*?)(?=^### |\Z)', txt, re.S | re.M)
-        if m:
-            return m.group(1).strip()
+        try:
+            txt = f.read_text(encoding='utf-8')
+        except (OSError, UnicodeDecodeError):
+            continue
+        for m in re.finditer(r'^### (\d{4}-\d{2}-\d{2})(?:\s*~\s*(\d{4}-\d{2}-\d{2}))?\s*$', txt, re.M):
+            try:
+                start = dt.date.fromisoformat(m.group(1))
+                end = dt.date.fromisoformat(m.group(2)) if m.group(2) else start
+            except ValueError:
+                continue
+            if not (start <= d <= end):
+                continue
+            body = txt[m.end():]
+            nxt = re.search(r'^### ', body, re.M)
+            return (body[:nxt.start()] if nxt else body).strip()
     return None
 
 
@@ -162,11 +182,13 @@ def build_review(today: dt.date, keep_days: int):
     parts = ['# 今日要复习的旧记忆（艾宾浩斯）', '']
     for n in REVIEW_DAYS:
         d = today - dt.timedelta(days=n)
-        if n <= keep_days:
-            src = DIARY / f'{d.isoformat()}.md'
-            text = src.read_text(encoding='utf-8') if src.exists() else None
-        else:
-            text = find_day_block(d)
+        # 不能按「天数 <= 保留期」判断去哪读：默认保留 7 天时 cutoff = today-6，
+        # today-7 的日记在本次 --apply 已被移进 archive/，src.exists() 为 False。
+        # 若仍按天数判断，就永远不会去总库兜底 → 「第 7 天」复习项永远缺失
+        # （15 天项反而正常，因为本来就走 else 分支）。
+        # 正确做法：按文件是否存在决定来源。
+        src = DIARY / f'{d.isoformat()}.md'
+        text = src.read_text(encoding='utf-8') if src.exists() else find_day_block(d)
         if not text:
             continue
         pts = [x for x in bullets(text) if not x.startswith('[')]
