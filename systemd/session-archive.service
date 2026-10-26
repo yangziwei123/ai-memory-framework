@@ -1,0 +1,6 @@
+[Unit]
+Description=Archive session directories idle for a long time
+[Service]
+Type=oneshot
+Environment=DAYS=45
+ExecStart=/usr/local/bin/archive-sessions.sh

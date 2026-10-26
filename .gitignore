@@ -1,0 +1,17 @@
+# 运行时产物
+__pycache__/
+*.pyc
+*.log
+
+# 真实记忆数据（只跟踪 examples/ 下的样例）
+/diary/
+/memory-bank/
+/short-memory.md
+/review-due.md
+/preferences.md
+/preferences.log
+/archive/
+
+# 备份
+*.tar.gz
+*-backups/

@@ -1,0 +1,10 @@
+[Unit]
+Description=Daily AI memory rotation
+
+[Timer]
+# 每天 23:50 轮转（提前她"今天"结束一点，第二天唤醒就是新记忆）
+OnCalendar=*-*-* 23:50:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,12 @@
+[Unit]
+Description=AI memory daily rotation (backup then apply)
+After=network-online.target
+
+[Service]
+Type=oneshot
+# 改这两行指向你的记忆目录与备份目录
+Environment=MEMORY_DIR=/home/ai/.ai-memory
+Environment=BACKUP_DIR=/home/ai/.ai-memory-backups
+Environment=KEEP_DAYS=7
+Environment=KEEP_BACKUPS=7
+ExecStart=/usr/local/bin/ai-memory-rotate.sh
