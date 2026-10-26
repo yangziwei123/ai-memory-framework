@@ -1,5 +1,12 @@
 # AI 长期记忆框架（三层 + 分区注入）
 
+> **Layered memory framework for long-running AI personas.** Three layers — short-term summary,
+> raw daily diary, long-term archive — plus **partition-based injection**: a group-chat session
+> structurally cannot see the `[私聊]` (DM) partition, because that content never enters its context.
+> No vector DB, no dependencies: plain Markdown files, one Python script, ~60 lines of injection code.
+>
+> Zero-setup demo: `node demo/run.js`
+
 给长期在线的 AI 人格（陪伴型 bot、群聊角色）用的**记忆框架**：
 让"她"记得住过去，同时**不让记忆无限膨胀、也不让私聊内容漏到群里**。
 
