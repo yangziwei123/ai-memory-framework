@@ -109,11 +109,36 @@ function createMemoryInjector(options = {}) {
     return prefCache.text;
   }
 
+  /**
+   * 判定会话可见范围。**未知 key 一律拒绝**（fail-closed）。
+   *
+   * 为什么不能默认当群聊、也不能默认当私聊：
+   *   旧实现用 `String(key||'').startsWith('group:')` 得到 isGroup，于是
+   *   undefined / '' / 'qq-group-123' 都变成「非群聊」→ 返回全部分区，
+   *   把 [私聊] 注进了群会话。这是把「结构性隔离」变成「默认放行」。
+   * 未知 key 说明调用方接错了，必须炸出来，不能猜。
+   */
+  function resolveScope(key) {
+    const raw = key == null ? '' : String(key);
+    if (raw.startsWith('group:')) return 'group';
+    if (raw.startsWith('private:')) return 'private';
+    return null;
+  }
+
   function buildPromptSection(key) {
-    const isGroup = String(key || '').startsWith('group:');
+    const scope = resolveScope(key);
+    if (!scope) {
+      throw new Error(
+        `memory-inject: 无法识别的会话 key "${key == null ? String(key) : String(key)}"；` +
+          '必须以 "group:" 或 "private:" 开头。为防把 [私聊] 分区注入群会话，这里直接拒绝而不是猜。'
+      );
+    }
+    const isGroup = scope === 'group';
     const blocks = readShortBlocks();
     // 群聊只见 [群] + [通用]；私聊全部
-    const visible = blocks.filter((b) => !isGroup || b.name === '群' || b.name === '通用');
+    const visible = isGroup
+      ? blocks.filter((b) => b.name === '群' || b.name === '通用')
+      : blocks;
     const parts = [];
 
     if (visible.length) {

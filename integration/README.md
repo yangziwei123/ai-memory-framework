@@ -57,7 +57,8 @@ const prompt =
   roleLine + tokenLine + memory.buildPromptSection(conversationKey) + taskLine;
 ```
 
-`conversationKey` 只需要能被 `startsWith('group:')` 判断即可（`group:123` / `private:456`）。
+`conversationKey` **必须以 `group:` 或 `private:` 开头**（`group:123` / `private:456`）。
+传其它值——包括 `undefined`、空串、`qq-group-1` 这种写错的前缀——会**直接抛错**，不会默认放行。
 
 ---
 
@@ -67,10 +68,21 @@ const prompt =
 
 ```js
 // integration/memory-inject.js
-const visible = blocks.filter((b) => !isGroup || b.name === '群' || b.name === '通用');
+// 未知 key 在 resolveScope() 里就抛错，走不到这里
+const visible = isGroup
+  ? blocks.filter((b) => b.name === '群' || b.name === '通用')
+  : blocks;
 ```
 
 这条过滤比任何"请勿泄露"的提示都可靠——她不可说的是她不知道的东西。
+
+跑一遍回归测试确认它没退化：
+
+```bash
+node integration/memory-inject.test.js
+```
+
+14 条断言，重点守「群聊拿不到 `[私聊]`」和「未知 key 必须抛错」。
 
 ---
 

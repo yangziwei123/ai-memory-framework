@@ -6,12 +6,22 @@
 # 只压缩不直接删：归档后仍可解压恢复。
 #
 # 用法：
-#   SESSIONS_ROOT=~/.dsh/sessions Archive=/var/backups/dsh-sessions DAYS=45 ./archive-sessions.sh
+#   SESSIONS_ROOT=~/path/to/sessions ARCHIVE_ROOT=/var/backups/sessions DAYS=45 ./archive-sessions.sh
 #   ./archive-sessions.sh --dry-run
 set -u
 
-SESSIONS_ROOT="${SESSIONS_ROOT:-$HOME/.dsh/sessions}"
-ARCHIVE_ROOT="${ARCHIVE_ROOT:-$HOME/.dsh-sessions-archive}"
+# SESSIONS_ROOT 必须显式指定：不同框架的会话目录位置不一样，
+# 猜错可能归档到无关目录，所以这里不给默认值。
+SESSIONS_ROOT="${SESSIONS_ROOT:-}"
+ARCHIVE_ROOT="${ARCHIVE_ROOT:-$HOME/.agent-sessions-archive}"
+if [ -z "$SESSIONS_ROOT" ]; then
+  echo "  ✗ 请指定 SESSIONS_ROOT（例如：SESSIONS_ROOT=~/path/to/sessions $0）" >&2
+  exit 2
+fi
+if [ ! -d "$SESSIONS_ROOT" ]; then
+  echo "  ✗ SESSIONS_ROOT 不存在：$SESSIONS_ROOT" >&2
+  exit 2
+fi
 DAYS="${DAYS:-45}"
 KEEP="${KEEP:-12}"
 DRY="${1:-}"

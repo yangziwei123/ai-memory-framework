@@ -35,7 +35,7 @@
 node demo/run.js
 ```
 
-真实输出（节选；`✓` 行是脚本自己打的实际校验结果）：
+节选（① ② ③ ⑤ 段是实际输出；④ 段是**手工整理的对比摘要**，程序打印的是完整提示词原文）：
 
 ```text
 记忆框架 demo
@@ -200,10 +200,18 @@ const prompt = roleLine + tokenLine + memory.buildPromptSection('group:123456') 
 ### 2. 群聊拿不到 `[私聊]` 分区——是结构，不是纪律
 
 ```js
-const visible = blocks.filter((b) => !isGroup || b.name === '群' || b.name === '通用');
+// 未知 key 在 resolveScope() 里就抛错（fail-closed），走不到这里
+const visible = isGroup
+  ? blocks.filter((b) => b.name === '群' || b.name === '通用')
+  : blocks;
 ```
 
 靠提示词写"请勿泄露私聊内容"一定会漏。让内容**根本不进上下文**，她就没有可泄露的东西。
+
+> ⚠️ 前提是判定必须 **fail-closed**：`key` 不以 `group:` / `private:` 开头就抛错。
+> 早期版本把 `startsWith('group:')` 取反当默认，于是 `undefined` / 空串 / 写错的
+> `qq-group-1` 全都漏成「私聊可见」——隔离承诺当场失效。现在有
+> `integration/memory-inject.test.js` 专门守着这条（14 条断言）。
 
 ### 3. 摘要必须按**字符**切，不能按行
 
@@ -264,4 +272,4 @@ const visible = blocks.filter((b) => !isGroup || b.name === '群' || b.name === 
 
 ## License
 
-MIT。文档 `docs/` 下的三份设计说明来自一个真实运行中的陪伴型 bot 项目，已脱敏。
+MIT。文档 `docs/` 下的三份设计说明来自一个真实运行中的陪伴型 bot 项目，已移除昵称、账号与主机相关信息。
