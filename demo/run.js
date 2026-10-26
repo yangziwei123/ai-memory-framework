@@ -23,14 +23,17 @@ const ROTATE = path.join(ROOT, 'memory_rotate.py');
 const { createMemoryInjector } = require(path.join(ROOT, 'integration', 'memory-inject.js'));
 
 const KEEP = process.argv.includes('--keep');
+// 颜色：支持 --no-color 与 NO_COLOR 环境变量（贴进 README 时用得上）
+const NO_COLOR = process.argv.includes('--no-color') || !!process.env.NO_COLOR;
 
 // ── 小工具 ────────────────────────────────────────────────────
+const wrap = (code) => (s) => (NO_COLOR ? String(s) : `\x1b[${code}m${s}\x1b[0m`);
 const c = {
-  dim: (s) => `\x1b[2m${s}\x1b[0m`,
-  bold: (s) => `\x1b[1m${s}\x1b[0m`,
-  green: (s) => `\x1b[32m${s}\x1b[0m`,
-  yellow: (s) => `\x1b[33m${s}\x1b[0m`,
-  cyan: (s) => `\x1b[36m${s}\x1b[0m`
+  dim: wrap('2'),
+  bold: wrap('1'),
+  green: wrap('32'),
+  yellow: wrap('33'),
+  cyan: wrap('36')
 };
 
 const line = (ch = '─') => console.log(c.dim(ch.repeat(66)));
